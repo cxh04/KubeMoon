@@ -3,5 +3,8 @@ import {
   "cxh04/kubemoon/queue",
   "cxh04/kubemoon/store",
   "cxh04/kubemoon/watch",
-  "moonbitlang/core/json",
 }
+
+import {
+  "moonbitlang/core/json",
+} for "test"
