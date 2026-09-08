@@ -1,8 +1,8 @@
 # KubeMoon
 
-MoonBit 原生的 Kubernetes 动态客户端与 Controller Runtime。目标不是把某个 YAML 操作包一层，而是补齐 Operator 真正依赖的那条长链：资源发现、动态对象、LIST/WATCH、缓存、去重队列、失败恢复与调谐。
+这是我用 MoonBit 开发的 Kubernetes 动态客户端与 Controller Runtime。我不想只给某个 YAML 操作包一层，而是补齐 Operator 真正依赖的那条长链：资源发现、动态对象、LIST/WATCH、缓存、去重队列、失败恢复与调谐。
 
-> 当前分支处于 v0.1 开发期：资源寻址、请求构造、状态错误、流式 Watch、Store、WorkQueue、Reflector 和 Fake Transport 已可测试；真实 HTTP 执行器与 ConfigMirror 部署闭环仍在推进。README 会明确区分“已验证”和“设计目标”。
+> 当前分支处于 v0.1 开发期：资源寻址、in-cluster 凭证、请求构造、状态错误、流式 Watch、Store、WorkQueue、Reflector 和 Fake Transport 已可测试；真实 HTTP 执行器与 ConfigMirror 部署闭环仍在推进。我会在 README 里明确区分“已验证”和“设计目标”。
 
 ![KubeMoon 中文架构图](docs/kubemoon-architecture.zh-CN.svg)
 
@@ -10,7 +10,7 @@ MoonBit 原生的 Kubernetes 动态客户端与 Controller Runtime。目标不�
 
 Kubernetes 客户端的难点不在发出一个 GET，而在长期运行后还能保持正确：WATCH 可能从任意字节处分块，连接会中断，resourceVersion 会过期，同一对象会在处理中再次变化。KubeMoon 把这些失败路径作为一等设计对象，并用纯状态机与虚拟时间把它们变成快速、确定的测试。
 
-项目选用动态资源模型，不要求用户先生成 OpenAPI 强类型代码。`GroupVersionResource + Scope` 可以覆盖内置资源和 CRD，后续强类型层可在其上渐进构建。
+我选择动态资源模型，不要求使用者先生成 OpenAPI 强类型代码。`GroupVersionResource + Scope` 可以覆盖内置资源和 CRD，后续强类型层可在其上渐进构建。
 
 ## 一个事件如何穿过 KubeMoon
 
@@ -34,7 +34,7 @@ moon test --target native
 
 ## 30 秒运行 ConfigMirror
 
-这一节将在真实 HTTP Transport、Controller 与部署清单通过 kind 生命周期测试后开放。预定体验是创建一个 `ConfigMirror`，将源 ConfigMap 镜像到多个 namespace，并观察 status、内容哈希、自愈和 finalizer 清理。开发期不提供无法逐条复现的演示命令。
+我会在真实 HTTP Transport、Controller 与部署清单通过 kind 生命周期测试后开放这一节。预定体验是创建一个 `ConfigMirror`，将源 ConfigMap 镜像到多个 namespace，并观察 status、内容哈希、自愈和 finalizer 清理。开发期我不会提供无法逐条复现的演示命令。
 
 ## 故障恢复现场
 
@@ -44,7 +44,7 @@ moon test --target native
 - `410 Gone / Expired`：离开 WATCH 循环，重新 LIST，而不是盲目重连旧版本。
 - 429/5xx：结构化标记为可重试；普通 404/409 交给调谐逻辑判断。
 
-## 我们主动没有做什么
+## 我主动没有做什么
 
 v0.1 不承诺 kubeconfig exec/OIDC、云厂商认证、OpenAPI 强类型生成、leader election、Admission Webhook 或 Wasm Operator Host。边界的意义是先把单 Controller 的正确性、恢复性和可复现性做扎实，而不是把未验证的功能写进清单。
 
