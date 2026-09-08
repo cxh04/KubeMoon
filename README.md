@@ -16,7 +16,7 @@ Kubernetes 客户端的难点不在发出一个 GET，而在长期运行后还�
 
 这一轮我只接住 Kubernetes API Server 返回的一份 `APIResourceList`，例如 core `v1` 或 `apps/v1`。解码结果保留服务端的资源顺序、namespace 作用域和 verbs；必需字段缺失或类型错误时，我拒绝整份结果，并指出出错的资源下标，避免动态客户端拿着半份目录继续工作。
 
-我会保留 `deployments/status` 这类子资源，供后续能力判断和请求构造使用，但现在不会为它生成顶层 `GroupVersionResource`。这是有意留下的安全边界：现有路径构造器面向顶层资源，提前复用会掩盖子资源 URL 与 verb 语义的差异。本轮也没有枚举 `/api`、`/apis`，没有缓存或网络请求；这些仍是后续开发项。
+我会保留 `deployments/status` 这类子资源，供后续能力判断和请求构造使用，但现在不会为它生成顶层 `GroupVersionResource`。这是有意留下的安全边界：现有路径构造器面向顶层资源，提前复用会掩盖子资源 URL 与 verb 语义的差异。客户端现在能为 core 或 grouped API 构造单份资源清单请求，但还没有枚举 `/api`、`/apis`，也没有缓存或网络执行；这些仍是后续开发项。
 
 ## 一个事件如何穿过 KubeMoon
 

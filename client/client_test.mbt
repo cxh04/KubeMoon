@@ -89,3 +89,35 @@ test "select merge and JSON patch media types" {
     content="application/json-patch+json",
   )
 }
+
+///|
+test "build core and grouped API resource list requests" {
+  let client = @client.DynamicClient::DynamicClient(
+    ClientConfig(server="https://cluster.example", bearer_token="secret"),
+  )
+  let core = client.resource_list_request(group="", version="v1").unwrap()
+  inspect(core.verb().http_name(), content="GET")
+  inspect(core.path(), content="https://cluster.example/api/v1")
+  inspect(core.header("authorization").unwrap_or(""), content="Bearer secret")
+  let apps = client.resource_list_request(group="apps", version="v1").unwrap()
+  inspect(apps.path(), content="https://cluster.example/apis/apps/v1")
+}
+
+///|
+test "reject malformed API resource list request coordinates" {
+  let client = @client.DynamicClient::DynamicClient(
+    ClientConfig(server="https://cluster.example"),
+  )
+  let cases = [
+    (("apps", ""), "Discovery version must not be empty"),
+    (("apps/v1", "v1"), "Discovery group must not contain '/'"),
+    (("apps", "v1/status"), "Discovery version must not contain '/'"),
+  ]
+  for coordinates_expected in cases {
+    let ((group, version), expected) = coordinates_expected
+    match client.resource_list_request(group~, version~) {
+      Err(message) => inspect(message, content=expected)
+      Ok(_) => fail("malformed discovery coordinates must be rejected")
+    }
+  }
+}
