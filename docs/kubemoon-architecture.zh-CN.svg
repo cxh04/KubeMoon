@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">KubeMoon 中文架构图</title>
+  <desc id="desc">展示 Kubernetes API、KubeMoon 客户端与调谐输出之间的 LIST WATCH 和故障恢复闭环。</desc>
+  <defs>
+    <marker id="orange" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#e98b2a"/></marker>
+    <marker id="blue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#3182ce"/></marker>
+    <marker id="red" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#d64545"/></marker>
+    <style>.t{font-family:'Microsoft YaHei','Noto Sans SC',sans-serif;fill:#17324d}.h{font-size:30px;font-weight:700}.s{font-size:18px}.b{fill:#fff;stroke:#8ca5b8;stroke-width:2;rx:16}.core{fill:#edf6ff;stroke:#3182ce}.api{fill:#fff8ed;stroke:#e98b2a}.out{fill:#eefbf4;stroke:#39a56a}.line{fill:none;stroke-width:4}</style>
+  </defs>
+  <rect width="1600" height="900" fill="#f6f8fb"/>
+  <text class="t h" x="70" y="65">KubeMoon：从观察到恢复的调谐闭环</text>
+  <text class="t s" x="70" y="98">动态资源模型 · 不丢未知字段 · resourceVersion 驱动 · 可确定性测试</text>
+
+  <rect class="b api" x="55" y="155" width="360" height="515"/>
+  <text class="t h" x="90" y="205">Kubernetes API</text>
+  <rect class="b" x="90" y="245" width="290" height="75"/><text class="t s" x="125" y="290">Discovery / API Server</text>
+  <rect class="b" x="90" y="355" width="290" height="75"/><text class="t s" x="160" y="400">源 ConfigMap</text>
+  <rect class="b" x="90" y="465" width="290" height="75"/><text class="t s" x="155" y="510">ConfigMirror CR</text>
+  <rect class="b" x="90" y="575" width="290" height="55"/><text class="t s" x="135" y="610">410 / 连接中断</text>
+
+  <rect class="b core" x="480" y="155" width="690" height="515"/>
+  <text class="t h" x="515" y="205">KubeMoon Runtime</text>
+  <g><rect class="b" x="520" y="260" width="155" height="82"/><text class="t s" x="567" y="308">Client</text>
+  <rect class="b" x="720" y="260" width="180" height="82"/><text class="t s" x="745" y="298">Watch</text><text class="t s" x="748" y="323">Decoder</text>
+  <rect class="b" x="945" y="260" width="170" height="82"/><text class="t s" x="1000" y="308">Store</text>
+  <rect class="b" x="945" y="420" width="170" height="82"/><text class="t s" x="985" y="468">WorkQueue</text>
+  <rect class="b" x="700" y="420" width="200" height="82"/><text class="t s" x="750" y="468">Reconciler</text>
+  <rect class="b" x="520" y="420" width="135" height="82"/><text class="t s" x="552" y="468">Finalizer</text></g>
+
+  <rect class="b out" x="1235" y="155" width="310" height="515"/>
+  <text class="t h" x="1270" y="205">调谐输出</text>
+  <rect class="b" x="1270" y="270" width="240" height="75"/><text class="t s" x="1300" y="315">目标 ConfigMap</text>
+  <rect class="b" x="1270" y="390" width="240" height="75"/><text class="t s" x="1355" y="435">Status</text>
+  <rect class="b" x="1270" y="510" width="240" height="75"/><text class="t s" x="1340" y="555">Finalizer</text>
+
+  <path class="line" d="M415 282 H510" stroke="#e98b2a" marker-end="url(#orange)"/><text class="t s" x="424" y="264">LIST</text>
+  <path class="line" d="M675 301 H710" stroke="#e98b2a" marker-end="url(#orange)"/><path class="line" d="M900 301 H935" stroke="#e98b2a" marker-end="url(#orange)"/>
+  <path class="line" d="M1030 342 V410" stroke="#e98b2a" marker-end="url(#orange)"/>
+  <path class="line" d="M945 461 H910" stroke="#777" stroke-dasharray="9 8" marker-end="url(#blue)"/><text class="t s" x="916" y="445">key</text>
+  <path class="line" d="M700 461 H665" stroke="#3182ce" marker-end="url(#blue)"/>
+  <path class="line" d="M1115 461 H1225" stroke="#3182ce" marker-end="url(#blue)"/>
+  <path class="line" d="M415 602 C520 710 750 715 808 352" stroke="#d64545" marker-end="url(#red)"/><text class="t s" x="520" y="694">断线重连；Expired/410 → 重新 LIST</text>
+
+  <g transform="translate(70 770)"><text class="t h" x="0" y="0">发现</text><text class="t h" x="285" y="0">快照</text><text class="t h" x="570" y="0">监听</text><text class="t h" x="855" y="0">调谐</text><text class="t h" x="1140" y="0">恢复</text>
+  <path class="line" d="M85 -10 H260 M370 -10 H545 M655 -10 H830 M940 -10 H1115" stroke="#8ca5b8" marker-end="url(#blue)"/>
+  <text class="t s" x="0" y="48">GVR / Scope</text><text class="t s" x="285" y="48">LIST / Store</text><text class="t s" x="570" y="48">WATCH / RV</text><text class="t s" x="855" y="48">Queue / Retry</text><text class="t s" x="1140" y="48">Relist / Self-heal</text></g>
+</svg>
