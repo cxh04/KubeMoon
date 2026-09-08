@@ -4,14 +4,22 @@ pub struct ApiResource {
   group_value : String
   version_value : String
   name_value : String
+  singular_name_value : String
   kind_value : String
   namespaced_value : Bool
   verbs_value : Array[String]
+  short_names_value : Array[String]
+  categories_value : Array[String]
 }
 
 ///|
 pub fn ApiResource::name(self : ApiResource) -> String {
   self.name_value
+}
+
+///|
+pub fn ApiResource::singular_name(self : ApiResource) -> String {
+  self.singular_name_value
 }
 
 ///|
@@ -27,6 +35,16 @@ pub fn ApiResource::namespaced(self : ApiResource) -> Bool {
 ///|
 pub fn ApiResource::verbs(self : ApiResource) -> ArrayView[String] {
   self.verbs_value[:]
+}
+
+///|
+pub fn ApiResource::short_names(self : ApiResource) -> ArrayView[String] {
+  self.short_names_value[:]
+}
+
+///|
+pub fn ApiResource::categories(self : ApiResource) -> ArrayView[String] {
+  self.categories_value[:]
 }
 
 ///|
@@ -133,6 +151,35 @@ fn decode_verbs(fields : Map[String, Json]) -> Result[Array[String], String] {
 }
 
 ///|
+fn optional_string(
+  fields : Map[String, Json],
+  key : String,
+) -> Result[String, String] {
+  match fields.get(key) {
+    None => Ok("")
+    Some(String(value)) => Ok(value)
+    Some(_) => Err("\{key} must be a string")
+  }
+}
+
+///|
+fn optional_string_array(
+  fields : Map[String, Json],
+  key : String,
+) -> Result[Array[String], String] {
+  guard fields.get(key) is Some(value) else { return Ok([]) }
+  guard value is Array(values) else { return Err("\{key} must be an array") }
+  let result : Array[String] = []
+  for index, item in values {
+    match item {
+      String(value) => result.push(value)
+      _ => return Err("\{key}[\{index}] must be a string")
+    }
+  }
+  Ok(result)
+}
+
+///|
 fn decode_resource(
   value : Json,
   group : String,
@@ -159,13 +206,28 @@ fn decode_resource(
     Ok(value) => value
     Err(message) => return Err(message)
   }
+  let singular_name = match optional_string(fields, "singularName") {
+    Ok(value) => value
+    Err(message) => return Err(message)
+  }
+  let short_names = match optional_string_array(fields, "shortNames") {
+    Ok(value) => value
+    Err(message) => return Err(message)
+  }
+  let categories = match optional_string_array(fields, "categories") {
+    Ok(value) => value
+    Err(message) => return Err(message)
+  }
   Ok({
     group_value: group,
     version_value: version,
     name_value: name,
+    singular_name_value: singular_name,
     kind_value: kind,
     namespaced_value: namespaced,
     verbs_value: verbs,
+    short_names_value: short_names,
+    categories_value: categories,
   })
 }
 

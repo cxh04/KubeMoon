@@ -55,3 +55,46 @@ test "reject malformed discovery documents with precise context" {
     }
   }
 }
+
+///|
+test "preserve discovery aliases and categories in server order" {
+  let body = "{\"groupVersion\":\"apps/v1\",\"resources\":[{\"name\":\"deployments\",\"singularName\":\"deployment\",\"shortNames\":[\"deploy\",\"dep\"],\"categories\":[\"all\",\"workloads\"],\"kind\":\"Deployment\",\"namespaced\":true,\"verbs\":[\"get\"],\"futureField\":true}]}"
+  let deployment = @discovery.decode_resource_list(body).unwrap().resources()[0]
+  inspect(deployment.singular_name(), content="deployment")
+  inspect(deployment.short_names().join(","), content="deploy,dep")
+  inspect(deployment.categories().join(","), content="all,workloads")
+}
+
+///|
+test "default omitted optional resource metadata to empty values" {
+  let body = "{\"groupVersion\":\"v1\",\"resources\":[{\"name\":\"pods\",\"kind\":\"Pod\",\"namespaced\":true,\"verbs\":[\"get\"]}]}"
+  let pod = @discovery.decode_resource_list(body).unwrap().resources()[0]
+  inspect(pod.singular_name(), content="")
+  inspect(pod.short_names().length(), content="0")
+  inspect(pod.categories().length(), content="0")
+}
+
+///|
+test "reject malformed optional resource metadata with index context" {
+  let cases = [
+    (
+      "{\"groupVersion\":\"v1\",\"resources\":[{\"name\":\"pods\",\"kind\":\"Pod\",\"namespaced\":true,\"verbs\":[],\"shortNames\":\"po\"}]}",
+      "resources[0]: shortNames must be an array",
+    ),
+    (
+      "{\"groupVersion\":\"v1\",\"resources\":[{\"name\":\"pods\",\"kind\":\"Pod\",\"namespaced\":true,\"verbs\":[],\"categories\":[1]}]}",
+      "resources[0]: categories[0] must be a string",
+    ),
+    (
+      "{\"groupVersion\":\"v1\",\"resources\":[{\"name\":\"pods\",\"kind\":\"Pod\",\"namespaced\":true,\"verbs\":[],\"singularName\":false}]}",
+      "resources[0]: singularName must be a string",
+    ),
+  ]
+  for input_expected in cases {
+    let (input, expected) = input_expected
+    match @discovery.decode_resource_list(input) {
+      Err(message) => inspect(message, content=expected)
+      Ok(_) => fail("malformed optional metadata must be rejected")
+    }
+  }
+}
