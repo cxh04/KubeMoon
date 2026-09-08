@@ -1,0 +1,26 @@
+#!/bin/sh
+set -eu
+
+remote_url="$2"
+case "$remote_url" in
+  https://github.com/*)
+    owner_path=${remote_url#https://github.com/}
+    ;;
+  git@github.com:*)
+    owner_path=${remote_url#git@github.com:}
+    ;;
+  *)
+    exit 0
+    ;;
+esac
+
+expected_owner=${owner_path%%/*}
+active_owner=$(gh api user --jq .login 2>/dev/null) || {
+  echo "pre-push: unable to verify the active GitHub account" >&2
+  exit 1
+}
+
+if [ "$active_owner" != "$expected_owner" ]; then
+  echo "pre-push: active account '$active_owner' does not own '$remote_url'" >&2
+  exit 1
+fi
