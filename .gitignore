@@ -1,0 +1,6 @@
+_build/
+target/
+.worktrees/
+.DS_Store
+*.log
+
