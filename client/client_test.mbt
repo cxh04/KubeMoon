@@ -121,3 +121,31 @@ test "reject malformed API resource list request coordinates" {
     }
   }
 }
+
+///|
+test "build the core API versions discovery request" {
+  let client = @client.DynamicClient::DynamicClient(
+    ClientConfig(server="https://cluster.example/", bearer_token="secret"),
+  )
+  let request = client.api_versions_request()
+  inspect(request.verb().http_name(), content="GET")
+  inspect(request.path(), content="https://cluster.example/api")
+  inspect(request.header("accept").unwrap_or(""), content="application/json")
+  inspect(
+    request.header("authorization").unwrap_or(""),
+    content="Bearer secret",
+  )
+  inspect(request.body() is None, content="true")
+}
+
+///|
+test "build the named API groups discovery request" {
+  let client = @client.DynamicClient::DynamicClient(
+    ClientConfig(server="https://cluster.example"),
+  )
+  let request = client.api_groups_request()
+  inspect(request.verb().http_name(), content="GET")
+  inspect(request.path(), content="https://cluster.example/apis")
+  inspect(request.header("accept").unwrap_or(""), content="application/json")
+  inspect(request.header("authorization") is None, content="true")
+}

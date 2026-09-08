@@ -34,6 +34,24 @@ fn DynamicClient::prepare(
 }
 
 ///|
+/// Build the request that lists the core API versions served by the cluster.
+/// This method only constructs the request; it performs no network I/O.
+pub fn DynamicClient::api_versions_request(
+  self : DynamicClient,
+) -> @transport.Request {
+  self.prepare(Request(Get, self.endpoint("/api")))
+}
+
+///|
+/// Build the request that lists the named API groups served by the cluster.
+/// This method only constructs the request; it performs no network I/O.
+pub fn DynamicClient::api_groups_request(
+  self : DynamicClient,
+) -> @transport.Request {
+  self.prepare(Request(Get, self.endpoint("/apis")))
+}
+
+///|
 /// Build a request for one Kubernetes APIResourceList.
 /// An empty group selects the core API; this method does not enumerate API
 /// groups or send the request.
