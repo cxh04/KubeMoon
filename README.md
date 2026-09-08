@@ -1,8 +1,8 @@
 # KubeMoon
 
-这是我用 MoonBit 开发的 Kubernetes 动态客户端与 Controller Runtime。我不想只给某个 YAML 操作包一层，而是补齐 Operator 真正依赖的那条长链：资源发现、动态对象、LIST/WATCH、缓存、去重队列、失败恢复与调谐。
+这是我基于 MoonBit 开发的 Kubernetes 动态客户端与 Controller Runtime。没有只给某个 YAML 操作包一层，而是补齐 Operator 真正依赖的那条长链：资源发现、动态对象、LIST/WATCH、缓存、去重队列、失败恢复与调谐。
 
-> 当前分支处于 v0.1 开发期：资源寻址、in-cluster 凭证、请求构造、状态错误、流式 Watch、Store、WorkQueue、Reflector 和 Fake Transport 已可测试；真实 HTTP 执行器与 ConfigMirror 部署闭环仍在推进。我会在 README 里明确区分“已验证”和“设计目标”。
+> 当前处于 v0.1 开发期：资源寻址、in-cluster 凭证、请求构造、状态错误、流式 Watch、Store、WorkQueue、Reflector 和 Fake Transport 已可测试；真实 HTTP 执行器与 ConfigMirror 部署闭环仍在推进。我会在 README 里明确区分“已验证”和“设计目标”。
 
 ![KubeMoon 中文架构图](docs/kubemoon-architecture.zh-CN.svg)
 
@@ -44,9 +44,9 @@ moon test --target native
 - `410 Gone / Expired`：离开 WATCH 循环，重新 LIST，而不是盲目重连旧版本。
 - 429/5xx：结构化标记为可重试；普通 404/409 交给调谐逻辑判断。
 
-## 我主动没有做什么
+## 声明质量边界
 
-v0.1 不承诺 kubeconfig exec/OIDC、云厂商认证、OpenAPI 强类型生成、leader election、Admission Webhook 或 Wasm Operator Host。边界的意义是先把单 Controller 的正确性、恢复性和可复现性做扎实，而不是把未验证的功能写进清单。
+v0.1 不承诺 kubeconfig exec/OIDC、云厂商认证、OpenAPI 强类型生成、leader election、Admission Webhook 或 Wasm Operator Host。计划先把单 Controller 的正确性、恢复性和可复现性做扎实。
 
 ## 从 v0.1 到完整 Operator 生态
 
@@ -54,6 +54,6 @@ v0.1 不承诺 kubeconfig exec/OIDC、云厂商认证、OpenAPI 强类型生成�
 
 ## 开发记录与许可证
 
-提交遵循 Conventional Commits，正文记录实际验证命令。失败实验与设计变化保留在提交说明、Issue 或开发札记中，不伪造时间、错误提交或机械数量。AI 使用边界见 [AI_ASSISTED.md](AI_ASSISTED.md)。
+提交遵循 Conventional Commits，正文记录实际验证命令。失败实验与设计变化保留在提交说明、Issue 或开发日记中，有自身主导ai辅助开发。AI 使用边界见 [AI_ASSISTED.md](AI_ASSISTED.md)。
 
 Apache-2.0 licensed. Copyright 2026 cxh04.
