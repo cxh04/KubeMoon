@@ -1,0 +1,4 @@
+import {
+  "cxh04/kubemoon/resource",
+  "moonbitlang/core/json",
+}
