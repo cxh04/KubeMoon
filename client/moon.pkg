@@ -1,0 +1,5 @@
+import {
+  "cxh04/kubemoon/config",
+  "cxh04/kubemoon/resource",
+  "cxh04/kubemoon/transport",
+}
