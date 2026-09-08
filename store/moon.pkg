@@ -1,4 +1,7 @@
 import {
   "cxh04/kubemoon/object",
-  "moonbitlang/core/json",
 }
+
+import {
+  "moonbitlang/core/json",
+} for "test"
