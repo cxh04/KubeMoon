@@ -34,6 +34,32 @@ fn DynamicClient::prepare(
 }
 
 ///|
+/// Build a request for one Kubernetes APIResourceList.
+/// An empty group selects the core API; this method does not enumerate API
+/// groups or send the request.
+pub fn DynamicClient::resource_list_request(
+  self : DynamicClient,
+  group~ : String,
+  version~ : String,
+) -> Result[@transport.Request, String] {
+  if version.is_empty() {
+    return Err("Discovery version must not be empty")
+  }
+  if group.contains("/") {
+    return Err("Discovery group must not contain '/'")
+  }
+  if version.contains("/") {
+    return Err("Discovery version must not contain '/'")
+  }
+  let path = if group.is_empty() {
+    "/api/\{version}"
+  } else {
+    "/apis/\{group}/\{version}"
+  }
+  Ok(self.prepare(Request(Get, self.endpoint(path))))
+}
+
+///|
 pub fn DynamicClient::list_request(
   self : DynamicClient,
   resource : @resource.GroupVersionResource,
