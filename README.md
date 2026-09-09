@@ -2,7 +2,7 @@
 
 这是我基于 MoonBit 开发的 Kubernetes 动态客户端与 Controller Runtime。没有只给某个 YAML 操作包一层，而是补齐 Operator 真正依赖的那条长链：资源发现、动态对象、LIST/WATCH、缓存、去重队列、失败恢复与调谐。
 
-> 当前处于 v0.1 开发期：资源寻址、单份 APIResourceList 解码、in-cluster 凭证、请求构造、状态错误、流式 Watch、Store、WorkQueue、Reflector 和 Fake Transport 已可测试；真实 HTTP 执行器与 ConfigMirror 部署闭环仍在推进。我会在 README 里明确区分“已验证”和“设计目标”。
+> 当前处于 v0.1 开发期：资源寻址、core API 版本目录与单份 APIResourceList 解码、in-cluster 凭证、请求构造、状态错误、流式 Watch、Store、WorkQueue、Reflector 和 Fake Transport 已可测试；真实 HTTP 执行器与 ConfigMirror 部署闭环仍在推进。我会在 README 里明确区分“已验证”和“设计目标”。
 
 ![KubeMoon 中文架构图](docs/kubemoon-architecture.zh-CN.svg)
 
@@ -16,7 +16,7 @@ Kubernetes 客户端的难点不在发出一个 GET，而在长期运行后还�
 
 这一轮我只接住 Kubernetes API Server 返回的一份 `APIResourceList`，例如 core `v1` 或 `apps/v1`。解码结果保留服务端的资源顺序、namespace 作用域、verbs，以及 `singularName`、短名称和分类；必需字段缺失或字段类型错误时，我拒绝整份结果，并指出出错的资源下标，避免动态客户端拿着半份目录继续工作。
 
-我会保留 `deployments/status` 这类子资源，供后续能力判断和请求构造使用，但现在不会为它生成顶层 `GroupVersionResource`。这是有意留下的安全边界：现有路径构造器面向顶层资源，提前复用会掩盖子资源 URL 与 verb 语义的差异。客户端现在能为 `/api`、`/apis` 根入口及 core/grouped API 的单份资源清单构造认证请求，但还没有解码根目录、缓存结果或执行网络请求；这些仍是后续开发项。
+我会保留 `deployments/status` 这类子资源，供后续能力判断和请求构造使用，但现在不会为它生成顶层 `GroupVersionResource`。这是有意留下的安全边界：现有路径构造器面向顶层资源，提前复用会掩盖子资源 URL 与 verb 语义的差异。客户端现在能为 `/api`、`/apis` 根入口及 core/grouped API 的单份资源清单构造认证请求，也能解码 `/api` 的有序 core 版本目录；`/apis` 分组目录、缓存和网络执行仍是后续开发项。
 
 ## 一个事件如何穿过 KubeMoon
 
