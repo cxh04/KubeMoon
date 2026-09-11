@@ -11,7 +11,7 @@ pub fn GroupVersionResource::GroupVersionResource(
   version~ : String,
   resource~ : String,
 ) -> GroupVersionResource {
-  { group, version, resource }
+  { group, version, resource, }
 }
 
 ///|

@@ -11,7 +11,7 @@ pub fn ClientConfig::ClientConfig(
   bearer_token? : String,
   ca_file? : String,
 ) -> ClientConfig {
-  { server: server.trim_end(chars="/").to_owned(), bearer_token, ca_file }
+  { server: server.trim_end(chars="/").to_owned(), bearer_token, ca_file, }
 }
 
 ///|

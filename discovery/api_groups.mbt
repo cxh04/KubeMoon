@@ -98,7 +98,7 @@ fn decode_group_version(
   if group_version != expected {
     return Err("groupVersion must match \{expected}")
   }
-  Ok({ group_version_value: group_version, version_value: version })
+  Ok({ group_version_value: group_version, version_value: version, })
 }
 
 ///|
@@ -185,5 +185,5 @@ pub fn decode_api_group_list(body : String) -> Result[ApiGroupList, String] {
       Err(message) => return Err(message)
     }
   }
-  Ok({ groups_value: groups })
+  Ok({ groups_value: groups, })
 }
