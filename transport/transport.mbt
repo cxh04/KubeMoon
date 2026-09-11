@@ -61,6 +61,12 @@ pub fn Request::header(self : Request, name : String) -> String? {
 }
 
 ///|
+/// Iterate over normalized request headers without exposing the mutable map.
+pub fn Request::headers(self : Request) -> Iter[(String, String)] {
+  self.headers.iter()
+}
+
+///|
 pub fn Request::body(self : Request) -> String? {
   self.body
 }

@@ -1,0 +1,21 @@
+supported_targets = "native"
+
+import {
+  "cxh04/kubemoon/config",
+  "cxh04/kubemoon/transport",
+  "moonbitlang/async/http",
+  "moonbitlang/async/io",
+  "moonbitlang/async/tls",
+}
+
+import {
+  "cxh04/kubemoon/client",
+  "cxh04/kubemoon/resource",
+  "moonbitlang/async",
+  "moonbitlang/core/debug",
+  "moonbitlang/async/socket",
+} for "test"
+
+import {
+  "moonbitlang/core/debug",
+} for "wbtest"
