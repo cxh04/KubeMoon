@@ -17,6 +17,8 @@ jobs:
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
       - name: Show toolchain
         run: moon version --all
+      - name: Resolve dependencies
+        run: moon update
       - name: Format
         run: moon fmt --check
       - name: Check without warnings
