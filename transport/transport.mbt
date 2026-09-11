@@ -32,7 +32,7 @@ pub fn Request::Request(
   path : String,
   body? : String,
 ) -> Request {
-  { verb, path, headers: {}, body, }
+  { verb, path, headers: {}, body }
 }
 
 ///|
@@ -73,7 +73,7 @@ pub struct Response {
 
 ///|
 pub fn Response::Response(status~ : Int, body~ : String) -> Response {
-  { status, body, }
+  { status, body }
 }
 
 ///|

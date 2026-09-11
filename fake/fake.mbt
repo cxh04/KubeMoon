@@ -10,7 +10,7 @@ pub struct ScriptedTransport {
 pub fn ScriptedTransport::ScriptedTransport(
   responses : Array[@transport.Response],
 ) -> ScriptedTransport {
-  { responses, requests: [], cursor: 0, }
+  { responses, requests: [], cursor: 0 }
 }
 
 ///|

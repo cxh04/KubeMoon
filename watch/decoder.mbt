@@ -85,7 +85,7 @@ fn decode_line(line : String) -> Result[WatchEvent, String] {
     Ok(kind) => kind
     Err(message) => return Err(message)
   }
-  Ok({ event_kind: kind, object_value, version: object_version(object_value), })
+  Ok({ event_kind: kind, object_value, version: object_version(object_value) })
 }
 
 ///|
@@ -97,7 +97,7 @@ pub struct Decoder {
 
 ///|
 pub fn Decoder::Decoder() -> Decoder {
-  { buffer: "", }
+  { buffer: "" }
 }
 
 ///|
