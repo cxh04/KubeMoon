@@ -40,5 +40,5 @@ pub fn decode_api_versions(body : String) -> Result[ApiVersions, String] {
       _ => return Err("versions[\{index}] must be a string")
     }
   }
-  Ok({ versions_value: versions, })
+  Ok({ versions_value: versions })
 }

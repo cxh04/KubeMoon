@@ -6,7 +6,7 @@ pub struct Store {
 
 ///|
 pub fn Store::Store() -> Store {
-  { objects: Map([]), }
+  { objects: Map([]) }
 }
 
 ///|
