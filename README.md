@@ -2,7 +2,7 @@
 
 这是我基于 MoonBit 开发的 Kubernetes 动态客户端与 Controller Runtime。没有只给某个 YAML 操作包一层，而是补齐 Operator 真正依赖的那条长链：资源发现、动态对象、LIST/WATCH、缓存、去重队列、失败恢复与调谐。
 
-> 当前处于 v0.1 开发期：资源寻址、core 与 named API group 目录、单份 APIResourceList 解码、in-cluster 凭证、请求构造、状态错误、流式 Watch、Store、WorkQueue、Reflector 和 Fake Transport 已可测试；真实 HTTP 执行器与 ConfigMirror 部署闭环仍在推进。我会在 README 里明确区分“已验证”和“设计目标”。
+> 当前处于 v0.1 开发期：资源寻址、Discovery 解码、in-cluster 凭证、请求构造、原生 HTTP/TLS 缓冲执行器、状态错误、流式 Watch、Store、WorkQueue、Reflector 和 Fake Transport 已可测试；Watch 网络流与 ConfigMirror 部署闭环仍在推进。我会在 README 里明确区分“已验证”和“设计目标”。
 
 ![KubeMoon 中文架构图](docs/kubemoon-architecture.zh-CN.svg)
 
@@ -16,7 +16,13 @@ Kubernetes 客户端的难点不在发出一个 GET，而在长期运行后还�
 
 我现在可以解码 `/api` 的 core 版本目录、`/apis` 的 named group 目录，以及一份 `APIResourceList`（例如 core `v1` 或 `apps/v1`）。named group 解码保留服务端的 group 与 version 顺序，不替 API Server 排序或去重；`preferredVersion` 可以缺省，但一旦存在，就必须与组名一致并且出现在该组的 `versions` 中。
 
-资源清单解码会保留 namespace 作用域、verbs、`singularName`、短名称、分类以及 `deployments/status` 这类子资源，但现在不会为子资源生成顶层 `GroupVersionResource`。目录或清单中的必需字段缺失、类型错误或版本关系不一致时，我拒绝整份结果，并用数组下标指出错误位置，避免动态客户端拿着半份目录继续工作。客户端尚未把这些解码器接到真实网络；缓存、刷新和 Aggregated Discovery v2 也仍是后续开发项。
+资源清单解码会保留 namespace 作用域、verbs、`singularName`、短名称、分类以及 `deployments/status` 这类子资源，但现在不会为子资源生成顶层 `GroupVersionResource`。目录或清单中的必需字段缺失、类型错误或版本关系不一致时，我拒绝整份结果，并用数组下标指出错误位置，避免动态客户端拿着半份目录继续工作。Discovery 请求现在可以交给真实 Transport 执行，但“发出请求—按端点选择解码器”的组合 API、缓存、刷新和 Aggregated Discovery v2 仍是后续开发项。
+
+## 第一条真实网络路径
+
+`httptransport` 基于 [`moonbitlang/async/http`](https://skills.mooncakes.io/docs/moonbitlang/async/http) 建立 native 连接，映射 KubeMoon 的五种请求方法、认证头与 JSON 请求体，并把完整响应读回现有 `Response`。同一执行器会复用连接；请求 URL 必须属于连接时指定的 API Server，避免携带 Bearer Token 的请求被误投到另一个 origin。
+
+HTTPS 默认使用系统信任根；`ClientConfig.ca_file` 存在时改用该 PEM 文件作为专用信任根，正好对应 Pod 内挂载的 ServiceAccount CA。这一批只实现适合 Discovery 与 CRUD 的缓冲响应：Watch 需要保持连接并逐块交给现有 Decoder，因此不会伪装成已经支持。
 
 ## 一个事件如何穿过 KubeMoon
 
@@ -40,7 +46,7 @@ moon test --target native
 
 ## 30 秒运行 ConfigMirror
 
-我会在真实 HTTP Transport、Controller 与部署清单通过 kind 生命周期测试后开放这一节。预定体验是创建一个 `ConfigMirror`，将源 ConfigMap 镜像到多个 namespace，并观察 status、内容哈希、自愈和 finalizer 清理。开发期我不会提供无法逐条复现的演示命令。
+我会在 Controller 与部署清单通过 kind 生命周期测试后开放这一节。预定体验是创建一个 `ConfigMirror`，将源 ConfigMap 镜像到多个 namespace，并观察 status、内容哈希、自愈和 finalizer 清理。开发期我不会提供无法逐条复现的演示命令。
 
 ## 故障恢复现场
 
@@ -56,7 +62,7 @@ v0.1 不承诺 kubeconfig exec/OIDC、云厂商认证、OpenAPI 强类型生成�
 
 ## 从 v0.1 到完整 Operator 生态
 
-近期闭环是原生 HTTP/TLS → discovery/CRUD 执行 → Controller/finalizer → ConfigMirror → kind E2E。稳定后再扩展共享 informer、多 Controller manager、leader election、代码生成与指标端点。动态底座和纯状态机不会因这些扩展被推倒重来。
+近期闭环是 Watch 网络流 → discovery/CRUD 组合执行 → Controller/finalizer → ConfigMirror → kind E2E。稳定后再扩展共享 informer、多 Controller manager、leader election、代码生成与指标端点。动态底座和纯状态机不会因这些扩展被推倒重来。
 
 ## 开发记录与许可证
 
