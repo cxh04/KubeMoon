@@ -264,5 +264,5 @@ pub fn decode_resource_list(body : String) -> Result[ResourceList, String] {
       Err(message) => return Err("resources[\{index}]: \{message}")
     }
   }
-  Ok({ group_value: group, version_value: version, resources_value: resources })
+  Ok({ group_value: group, version_value: version, resources_value: resources, })
 }
