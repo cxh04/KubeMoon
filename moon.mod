@@ -13,3 +13,7 @@ keywords = [ "kubernetes", "operator", "controller", "watch" ]
 preferred_target = "native"
 
 description = "A dynamic Kubernetes client and controller runtime for MoonBit"
+
+import {
+  "moonbitlang/async@0.21.3",
+}
