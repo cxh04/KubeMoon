@@ -11,6 +11,7 @@ import {
 import {
   "cxh04/kubemoon/client",
   "cxh04/kubemoon/resource",
+  "cxh04/kubemoon/watch",
   "moonbitlang/async",
   "moonbitlang/core/debug",
   "moonbitlang/async/socket",

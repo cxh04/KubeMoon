@@ -136,10 +136,18 @@ async test "read a watch response incrementally on its own connection" {
     defer stream.close()
     inspect(stream.status(), content="200")
     let body = StringBuilder()
+    let decoder = @watch.ByteDecoder::ByteDecoder()
+    let event_names : Array[String] = []
     while stream.read_some(5) is Some(chunk) {
       body.write_string(@utf8.decode(chunk))
+      for event in decoder.push(chunk).unwrap() {
+        event_names.push(event.kind().name())
+      }
     }
+    decoder.finish().unwrap()
     inspect(body.to_string(), content="{\"type\":\"BOOKMARK\",\"object\":{}}\n")
+    inspect(event_names.length(), content="1")
+    inspect(event_names[0], content="BOOKMARK")
   }
 }
 
