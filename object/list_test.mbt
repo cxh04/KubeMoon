@@ -7,6 +7,21 @@ test "decode list snapshot keeps items and collection resource version" {
   assert_eq(snapshot.items().length(), 2)
   assert_eq(snapshot.items()[0].identity(), "demo/a")
   assert_eq(snapshot.items()[1].identity(), "demo/b")
+  assert_true(snapshot.continue_token() is None)
+}
+
+///|
+test "decode list continuation as an opaque token" {
+  let snapshot = @object.decode_list_snapshot(
+    "{\"metadata\":{\"resourceVersion\":\"9\",\"continue\":\"next/+\"},\"items\":[]}",
+  ).unwrap()
+  assert_eq(snapshot.continue_token(), Some("next/+"))
+  assert_true(
+    @object.decode_list_snapshot(
+      "{\"metadata\":{\"resourceVersion\":\"9\",\"continue\":3},\"items\":[]}",
+    )
+    is Err(_),
+  )
 }
 
 ///|

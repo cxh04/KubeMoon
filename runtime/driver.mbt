@@ -29,21 +29,42 @@ pub async fn sync_once(
   list_first~ : Bool,
 ) -> Result[WatchOutcome, String] {
   if list_first {
-    let response = transport.send(client.list_request(resource, scope))
-    if !response.is_success() {
-      let status = response.status()
-      if status == 429 || status >= 500 {
-        return Ok(Retry)
+    let objects : Array[@object.DynamicObject] = []
+    let mut continuation : String? = None
+    let mut version = ""
+    for ;; {
+      let request = match continuation {
+        Some(token) => client.list_page_request(resource, scope, token)
+        None => client.list_request(resource, scope)
       }
-      return Err(
-        "Kubernetes LIST failed with HTTP \{status}: \{response.body()}",
-      )
+      let response = transport.send(request)
+      if !response.is_success() {
+        let status = response.status()
+        if status == 410 || status == 429 || status >= 500 {
+          return Ok(Retry)
+        }
+        return Err(
+          "Kubernetes LIST failed with HTTP \{status}: \{response.body()}",
+        )
+      }
+      let snapshot = match @object.decode_list_snapshot(response.body()) {
+        Ok(snapshot) => snapshot
+        Err(message) => return Err(message)
+      }
+      if version.is_empty() {
+        version = snapshot.resource_version()
+      } else if version != snapshot.resource_version() {
+        return Err("Paginated LIST resourceVersion changed between pages")
+      }
+      for object in snapshot.items() {
+        objects.push(object)
+      }
+      match snapshot.continue_token() {
+        Some(token) => continuation = Some(token)
+        None => break
+      }
     }
-    let snapshot = match @object.decode_list_snapshot(response.body()) {
-      Ok(snapshot) => snapshot
-      Err(message) => return Err(message)
-    }
-    reflector.replace(snapshot.items().to_owned(), snapshot.resource_version())
+    reflector.replace(objects, version)
   }
   let stream = transport.open_stream(
     client.watch_request(
@@ -117,10 +138,12 @@ pub async fn run(
       Ok(Relist) => {
         list_first = true
         delay_ms = 100
+        @async.sleep(100)
       }
       Ok(Resume) => {
         list_first = false
         delay_ms = 100
+        @async.sleep(100)
       }
       Ok(Retry) => {
         @async.sleep(delay_ms)

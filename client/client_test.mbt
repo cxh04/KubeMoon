@@ -212,3 +212,19 @@ test "status patch targets the CRD subresource" {
     Some("application/merge-patch+json"),
   )
 }
+
+///|
+test "list continuation encodes the token without changing the resource path" {
+  let client = @client.DynamicClient::DynamicClient(
+    ClientConfig(server="https://cluster.example"),
+  )
+  let request = client.list_page_request(
+    configmaps(),
+    Namespace("demo"),
+    "next/+",
+  )
+  assert_eq(
+    request.path(),
+    "https://cluster.example/api/v1/namespaces/demo/configmaps?continue=next%2F%2B",
+  )
+}

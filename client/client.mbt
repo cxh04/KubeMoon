@@ -94,6 +94,24 @@ pub fn DynamicClient::list_request(
 }
 
 ///|
+/// Continue a consistent Kubernetes LIST. The token is opaque and must be
+/// URL encoded without interpretation.
+pub fn DynamicClient::list_page_request(
+  self : DynamicClient,
+  resource : @resource.GroupVersionResource,
+  scope : @resource.Scope,
+  continue_token : String,
+) -> @transport.Request {
+  let path = @resource.collection_path(resource, scope)
+  self.prepare(
+    Request(
+      Get,
+      self.endpoint("\{path}?continue=\{@percent.encode(continue_token)}"),
+    ),
+  )
+}
+
+///|
 /// Build a Kubernetes watch request for a collection. The resource version is
 /// opaque: encode it as a query value without interpreting or sorting it.
 pub fn DynamicClient::watch_request(

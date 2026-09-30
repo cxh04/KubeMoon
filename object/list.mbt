@@ -4,6 +4,7 @@
 pub struct ListSnapshot {
   version : String
   objects : Array[DynamicObject]
+  continuation : String?
 }
 
 ///|
@@ -14,6 +15,11 @@ pub fn ListSnapshot::resource_version(self : ListSnapshot) -> String {
 ///|
 pub fn ListSnapshot::items(self : ListSnapshot) -> ArrayView[DynamicObject] {
   self.objects[:]
+}
+
+///|
+pub fn ListSnapshot::continue_token(self : ListSnapshot) -> String? {
+  self.continuation
 }
 
 ///|
@@ -34,6 +40,11 @@ pub fn decode_list_snapshot(body : String) -> Result[ListSnapshot, String] {
   guard fields.get("items") is Some(Array(items)) else {
     return Err("Missing list items array")
   }
+  let continuation = match metadata.get("continue") {
+    None | Some(String("")) => None
+    Some(String(token)) => Some(token)
+    _ => return Err("list metadata.continue must be a string")
+  }
   let objects : Array[DynamicObject] = []
   for index, item in items {
     match DynamicObject::try_from_json(item) {
@@ -41,5 +52,5 @@ pub fn decode_list_snapshot(body : String) -> Result[ListSnapshot, String] {
       Err(message) => return Err("items[\{index}]: \{message}")
     }
   }
-  Ok({ version, objects, })
+  Ok({ version, objects, continuation, })
 }
