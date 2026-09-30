@@ -2,7 +2,7 @@
 
 这是我基于 MoonBit 开发的 Kubernetes 动态客户端与 Controller Runtime。没有只给某个 YAML 操作包一层，而是补齐 Operator 真正依赖的那条长链：资源发现、动态对象、LIST/WATCH、缓存、去重队列、失败恢复与调谐。
 
-> 当前处于 v0.1 开发期：资源寻址、Discovery 解码、in-cluster 凭证、请求构造、原生 HTTP/TLS 缓冲执行器、状态错误、流式 Watch、Store、WorkQueue、Reflector 和 Fake Transport 已可测试；Watch 网络流与 ConfigMirror 部署闭环仍在推进。我会在 README 里明确区分“已验证”和“设计目标”。
+> 当前处于 v0.1 开发期：资源寻址、Discovery 解码、in-cluster 凭证、请求构造、原生 HTTP/TLS 执行器、状态错误、Watch 字节流与事件解码、Store、WorkQueue、Reflector 和 Fake Transport 已可测试；自动 LIST/WATCH 循环与 ConfigMirror 部署闭环仍在推进。我会在 README 里明确区分“已验证”和“设计目标”。
 
 ![KubeMoon 中文架构图](docs/kubemoon-architecture.zh-CN.svg)
 
@@ -22,7 +22,15 @@ Kubernetes 客户端的难点不在发出一个 GET，而在长期运行后还�
 
 `httptransport` 基于 [`moonbitlang/async/http`](https://skills.mooncakes.io/docs/moonbitlang/async/http) 建立 native 连接，映射 KubeMoon 的五种请求方法、认证头与 JSON 请求体，并把完整响应读回现有 `Response`。同一执行器会复用连接；请求 URL 必须属于连接时指定的 API Server，避免携带 Bearer Token 的请求被误投到另一个 origin。
 
-HTTPS 默认使用系统信任根；`ClientConfig.ca_file` 存在时改用该 PEM 文件作为专用信任根，正好对应 Pod 内挂载的 ServiceAccount CA。这一批只实现适合 Discovery 与 CRUD 的缓冲响应：Watch 需要保持连接并逐块交给现有 Decoder，因此不会伪装成已经支持。
+HTTPS 默认使用系统信任根；`ClientConfig.ca_file` 存在时改用该 PEM 文件作为专用信任根，正好对应 Pod 内挂载的 ServiceAccount CA。普通请求仍读取完整响应；WATCH 在独立连接上逐块返回原始字节，避免一个长期监听占住 CRUD 连接。`watch.ByteDecoder` 等到完整换行后才解码 UTF-8，字符恰好跨网络读取边界也不会损坏。
+
+我用一个本地脚本化 HTTP Server 演示这条真实网络路径，不需要 Kubernetes 集群：
+
+```bash
+moon run examples/watch_once --target native
+```
+
+输出为两行：`BOOKMARK 12`、`ADDED 13`。这证明请求、独立连接、分块读取与事件解码可以组合；它尚不执行自动重连或资源调谐。非 2xx 响应的状态码和响应体由流接口保留，调用方需先处理状态，再将 2xx 响应体送入事件解码器。
 
 ## 一个事件如何穿过 KubeMoon
 
@@ -40,6 +48,7 @@ HTTPS 默认使用系统信任根；`ClientConfig.ca_file` 存在时改用该 PE
 moon fmt --check
 moon check --target native --deny-warn --warn-list +73
 moon test --target native
+moon run examples/watch_once --target native
 ```
 
 测试覆盖 core/group 路径、APIVersions 与 APIGroupList 目录、APIResourceList 字段与错误边界、显式 Token 配置、CRUD 请求、Kubernetes Status 分类、任意分块事件、BOOKMARK、快照替换、重复版本、dirty key、退避复位及 410 relist。Fake Transport 会严格按脚本消费响应，脚本耗尽即失败，避免测试“凭空成功”。
@@ -62,7 +71,7 @@ v0.1 不承诺 kubeconfig exec/OIDC、云厂商认证、OpenAPI 强类型生成�
 
 ## 从 v0.1 到完整 Operator 生态
 
-近期闭环是 Watch 网络流 → discovery/CRUD 组合执行 → Controller/finalizer → ConfigMirror → kind E2E。稳定后再扩展共享 informer、多 Controller manager、leader election、代码生成与指标端点。动态底座和纯状态机不会因这些扩展被推倒重来。
+近期闭环是 LIST/WATCH 自动续传与 relist → discovery/CRUD 组合执行 → Controller/finalizer → ConfigMirror → kind E2E。稳定后再扩展共享 informer、多 Controller manager、leader election、代码生成与指标端点。动态底座和纯状态机不会因这些扩展被推倒重来。
 
 ## 开发记录与许可证
 
