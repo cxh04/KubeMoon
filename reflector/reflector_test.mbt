@@ -49,3 +49,30 @@ test "410 watch errors request a fresh LIST" {
   )
   inspect(reflector.apply(expired).unwrap().name(), content="RELIST")
 }
+
+///|
+test "delete removes cached object and malformed identities fail visibly" {
+  let reflector = @reflector.Reflector::Reflector()
+  reflector.replace([listed("settings", "10")], "10")
+  assert_eq(reflector.next_key(), Some("team-a/settings"))
+  reflector.done("team-a/settings")
+  let deleted = event(
+    "{\"type\":\"DELETED\",\"object\":{\"metadata\":{\"name\":\"settings\",\"namespace\":\"team-a\",\"resourceVersion\":\"11\"}}}",
+  )
+  assert_true(reflector.apply(deleted) is Ok(_))
+  assert_true(reflector.get("team-a/settings") is None)
+  assert_eq(reflector.next_key(), Some("team-a/settings"))
+  let invalid_added = event("{\"type\":\"ADDED\",\"object\":{}}")
+  let invalid_deleted = event("{\"type\":\"DELETED\",\"object\":{}}")
+  assert_true(reflector.apply(invalid_added) is Err(_))
+  assert_true(reflector.apply(invalid_deleted) is Err(_))
+}
+
+///|
+test "non-expired watch status remains an error" {
+  let reflector = @reflector.Reflector::Reflector()
+  let forbidden = event(
+    "{\"type\":\"ERROR\",\"object\":{\"reason\":\"Forbidden\",\"code\":403}}",
+  )
+  assert_true(reflector.apply(forbidden) is Err(_))
+}
