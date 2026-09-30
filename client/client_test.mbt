@@ -186,3 +186,29 @@ test "watch requests can start at the server's current version" {
     content="https://cluster.example/apis/apps/v1/deployments?watch=1&allowWatchBookmarks=true",
   )
 }
+
+///|
+test "status patch targets the CRD subresource" {
+  let client = @client.DynamicClient::DynamicClient(
+    ClientConfig(server="https://cluster.example"),
+  )
+  let request = client.patch_status_request(
+    GroupVersionResource(
+      group="kubemoon.cxh04.github.io",
+      version="v1alpha1",
+      resource="configmirrors",
+    ),
+    Namespace("demo"),
+    "mirror",
+    "{\"status\":{\"phase\":\"Ready\"}}",
+  )
+  assert_eq(
+    request.path(),
+    "https://cluster.example/apis/kubemoon.cxh04.github.io/v1alpha1/namespaces/demo/configmirrors/mirror/status",
+  )
+  assert_eq(request.verb().http_name(), "PATCH")
+  assert_eq(
+    request.header("content-type"),
+    Some("application/merge-patch+json"),
+  )
+}

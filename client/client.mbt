@@ -175,6 +175,24 @@ pub fn DynamicClient::patch_request(
 }
 
 ///|
+/// Patch the CRD status subresource. Status is not a top-level GVR and must
+/// never be sent through the normal collection path builder.
+pub fn DynamicClient::patch_status_request(
+  self : DynamicClient,
+  resource : @resource.GroupVersionResource,
+  scope : @resource.Scope,
+  name : String,
+  body : String,
+) -> @transport.Request {
+  let path = "\{@resource.object_path(resource, scope, name)}/status"
+  self.prepare(
+    @transport.Request(Patch, self.endpoint(path), body~).with_header(
+      "Content-Type", "application/merge-patch+json",
+    ),
+  )
+}
+
+///|
 pub fn DynamicClient::delete_request(
   self : DynamicClient,
   resource : @resource.GroupVersionResource,

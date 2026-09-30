@@ -1,0 +1,20 @@
+import {
+  "cxh04/kubemoon/client",
+  "cxh04/kubemoon/configmirror",
+  "cxh04/kubemoon/controller",
+  "cxh04/kubemoon/httptransport",
+  "cxh04/kubemoon/object",
+  "cxh04/kubemoon/reflector",
+  "cxh04/kubemoon/resource",
+  "cxh04/kubemoon/transport",
+  "moonbitlang/core/json",
+}
+
+supported_targets = "native"
+
+import {
+  "cxh04/kubemoon/config",
+  "moonbitlang/async",
+  "moonbitlang/async/http",
+  "moonbitlang/async/socket",
+} for "test"

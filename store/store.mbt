@@ -15,6 +15,15 @@ pub fn Store::length(self : Store) -> Int {
 }
 
 ///|
+pub fn Store::keys(self : Store) -> Array[String] {
+  let keys : Array[String] = []
+  for key in self.objects.keys() {
+    keys.push(key)
+  }
+  keys
+}
+
+///|
 pub fn Store::get(self : Store, key : String) -> @object.DynamicObject? {
   self.objects.get(key)
 }

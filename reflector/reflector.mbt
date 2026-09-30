@@ -119,6 +119,16 @@ pub fn Reflector::get(self : Reflector, key : String) -> @object.DynamicObject? 
 }
 
 ///|
+pub fn Reflector::keys(self : Reflector) -> Array[String] {
+  self.store.keys()
+}
+
+///|
+pub fn Reflector::enqueue(self : Reflector, key : String) -> Unit {
+  self.queue.add(key)
+}
+
+///|
 pub fn Reflector::next_key(self : Reflector) -> String? {
   self.queue.next()
 }
