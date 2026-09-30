@@ -2,7 +2,7 @@
 
 这是我基于 MoonBit 开发的 Kubernetes 动态客户端与 Controller Runtime。没有只给某个 YAML 操作包一层，而是补齐 Operator 真正依赖的那条长链：资源发现、动态对象、LIST/WATCH、缓存、去重队列、失败恢复与调谐。
 
-> 当前源码版本为 `0.1.1`；已发布的 `0.1.0` 完成了 native 测试和 [kind 生命周期验收](https://github.com/cxh04/KubeMoon/actions/runs/36689826457)。动态客户端、原生 HTTP/TLS、分页 LIST/WATCH 恢复、Controller 队列和 ConfigMirror 调谐均可验证。我还在独立新项目中安装 `cxh04/kubemoon@0.1.0` 并通过 native 检查。
+> `cxh04/kubemoon@0.1.1` 已发布；[本版 CI](https://github.com/cxh04/KubeMoon/actions/runs/36692570361) 通过了格式、零警告、native 测试、发布文件检查和 kind 生命周期验收。我还在独立新项目中安装该版本并通过 native 检查。
 
 ![KubeMoon 中文架构图](docs/kubemoon-architecture.zh-CN.svg)
 
@@ -43,6 +43,8 @@ moon run examples/watch_once --target native
 7. 收到 `Expired/410` 时自动重新 LIST；LIST 分页收齐之前不替换缓存，正常断线则从最后的 resourceVersion 续传。
 
 ## 现在就能验证什么
+
+在另一个 MoonBit 项目中安装发布版：`moon add cxh04/kubemoon@0.1.1`。我从空项目执行过这条命令，并确认下载的包不含开发设计札记。
 
 ```bash
 moon fmt --check
