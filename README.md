@@ -2,7 +2,7 @@
 
 这是我基于 MoonBit 开发的 Kubernetes 动态客户端与 Controller Runtime。没有只给某个 YAML 操作包一层，而是补齐 Operator 真正依赖的那条长链：资源发现、动态对象、LIST/WATCH、缓存、去重队列、失败恢复与调谐。
 
-> 当前处于 v0.1 开发期：资源寻址、Discovery 解码、in-cluster 凭证、请求构造、原生 HTTP/TLS 执行器、状态错误、Watch 字节流与事件解码、Store、WorkQueue、Reflector 和 Fake Transport 已可测试；自动 LIST/WATCH 循环与 ConfigMirror 部署闭环仍在推进。我会在 README 里明确区分“已验证”和“设计目标”。
+> 当前处于 v0.1 验收期：动态客户端、原生 HTTP/TLS、分页 LIST/WATCH 恢复、Controller 队列和 ConfigMirror 调谐已通过本地 native 测试。CRD、RBAC、容器镜像和 kind 生命周期脚本已入库；kind 集群与 Mooncakes 消费者安装仍须以 CI 和发布结果验收，不能用单元测试代替。
 
 ![KubeMoon 中文架构图](docs/kubemoon-architecture.zh-CN.svg)
 
@@ -40,7 +40,7 @@ moon run examples/watch_once --target native
 4. `reflector` 用 resourceVersion 更新 `store`；BOOKMARK 只推进进度。
 5. `queue` 合并重复 key。处理期间再次变化时，只补一次调谐。
 6. 失败进入有上限的指数退避；测试通过显式推进虚拟时钟，不 sleep。
-7. 收到 `Expired/410` 时返回 `RELIST`，由外层重新建立快照。
+7. 收到 `Expired/410` 时自动重新 LIST；LIST 分页收齐之前不替换缓存，正常断线则从最后的 resourceVersion 续传。
 
 ## 现在就能验证什么
 
@@ -48,14 +48,17 @@ moon run examples/watch_once --target native
 moon fmt --check
 moon check --target native --deny-warn --warn-list +73
 moon test --target native
+moon build cmd/configmirror --target native
 moon run examples/watch_once --target native
 ```
 
 测试覆盖 core/group 路径、APIVersions 与 APIGroupList 目录、APIResourceList 字段与错误边界、显式 Token 配置、CRUD 请求、Kubernetes Status 分类、任意分块事件、BOOKMARK、快照替换、重复版本、dirty key、退避复位及 410 relist。Fake Transport 会严格按脚本消费响应，脚本耗尽即失败，避免测试“凭空成功”。
 
-## 30 秒运行 ConfigMirror
+## 在 kind 中验收 ConfigMirror
 
-我会在 Controller 与部署清单通过 kind 生命周期测试后开放这一节。预定体验是创建一个 `ConfigMirror`，将源 ConfigMap 镜像到多个 namespace，并观察 status、内容哈希、自愈和 finalizer 清理。开发期我不会提供无法逐条复现的演示命令。
+`cmd/configmirror` 使用 Pod 内 ServiceAccount Token 和 CA，监听 ConfigMirror 与 ConfigMap，按源内容创建或更新多个 namespace 的目标。它只会修改带有当前 CR UID 注解的目标；同名但不受管的 ConfigMap 会使 `Ready=False`，不会被覆盖。删除 CR 时，finalizer 等受管目标实际消失后才移除。
+
+在 Linux、Docker、kind、kubectl 均可用的机器上运行 `bash tests/kind-e2e.sh`。脚本创建独立的 kind 集群，构建 native 镜像，安装 [CRD](deploy/configmirror-crd.yaml) 与 [Controller/RBAC](deploy/configmirror-controller.yaml)，验证双目标同步、源更新、目标删除自愈、Controller 重启及 finalizer 清理，最后删除它创建的集群。本机 Windows 环境没有 Docker/kind，因此这项结果以 GitHub Actions 的 kind 作业为准；作业未通过前不宣称端到端验收完成。
 
 ## 故障恢复现场
 
@@ -71,7 +74,7 @@ v0.1 不承诺 kubeconfig exec/OIDC、云厂商认证、OpenAPI 强类型生成�
 
 ## 从 v0.1 到完整 Operator 生态
 
-近期闭环是 LIST/WATCH 自动续传与 relist → discovery/CRUD 组合执行 → Controller/finalizer → ConfigMirror → kind E2E。稳定后再扩展共享 informer、多 Controller manager、leader election、代码生成与指标端点。动态底座和纯状态机不会因这些扩展被推倒重来。
+本次验收优先确认真实集群生命周期与新项目安装。当前实现只针对单实例 Controller：它以集群级 ConfigMap WATCH 识别源和目标变更，后续再缩小监听范围并增加共享 informer、多 Controller manager、leader election、代码生成与指标端点。
 
 ## 开发记录与许可证
 
