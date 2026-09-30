@@ -1,0 +1,11 @@
+import {
+  "cxh04/kubemoon/object",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/x/crypto",
+}
+
+supported_targets = "native"
+
+import {
+  "moonbitlang/core/json",
+} for "test"

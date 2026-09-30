@@ -16,4 +16,5 @@ description = "A dynamic Kubernetes client and controller runtime for MoonBit"
 
 import {
   "moonbitlang/async@0.21.3",
+  "moonbitlang/x@0.5.5",
 }
