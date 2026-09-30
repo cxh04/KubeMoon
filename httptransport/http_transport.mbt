@@ -2,6 +2,7 @@
 /// Failures detected before a request is written to the network connection.
 pub(all) suberror HttpTransportError {
   RequestOriginMismatch(expected~ : String, actual~ : String)
+  StreamingRequiresGet
 } derive(Debug, Eq)
 
 ///|
@@ -18,7 +19,34 @@ pub extend HttpTransportError with Eq::{not_equal, equal}
 /// executor batch.
 pub struct HttpTransport {
   server : String
+  ca_file : String?
   client : @http.Client
+}
+
+///|
+/// A response body kept open for incremental reads. The caller owns `close`.
+pub struct StreamResponse {
+  code : Int
+  client : @http.Client
+}
+
+///|
+pub fn StreamResponse::status(self : StreamResponse) -> Int {
+  self.code
+}
+
+///|
+/// Return the next raw byte chunk, or `None` at a clean HTTP body EOF.
+pub async fn StreamResponse::read_some(
+  self : StreamResponse,
+  max_len : Int,
+) -> Bytes? {
+  self.client.read_some(max_len~)
+}
+
+///|
+pub fn StreamResponse::close(self : StreamResponse) -> Unit {
+  self.client.close()
 }
 
 ///|
@@ -74,7 +102,7 @@ pub async fn HttpTransport::connect(
   config : @config.ClientConfig,
 ) -> HttpTransport {
   let client = @http.Client(config.server(), trust=trust_root(config.ca_file()))
-  { server: config.server(), client, }
+  { server: config.server(), ca_file: config.ca_file(), client, }
 }
 
 ///|
@@ -106,4 +134,22 @@ pub async fn HttpTransport::send(
   let response = self.client.end_request()
   let body = self.client.read_all().text()
   Response(status=response.code, body~)
+}
+
+///|
+/// Start a GET stream on a separate connection so buffered client requests
+/// remain usable while a Kubernetes watch remains open.
+pub async fn HttpTransport::open_stream(
+  self : HttpTransport,
+  request : @transport.Request,
+) -> StreamResponse {
+  let target = request_target(self.server, request.path())
+  if !(request.verb() is Get) || request.body() is Some(_) {
+    raise StreamingRequiresGet
+  }
+  let client = @http.Client(self.server, trust=trust_root(self.ca_file))
+  errdefer client.close()
+  client.request(Get, target, extra_headers=request_headers(request))
+  let response = client.end_request()
+  { code: response.code, client, }
 }
