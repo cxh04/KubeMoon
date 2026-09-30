@@ -121,7 +121,7 @@ async test "deletion waits for managed target to vanish before removing finalize
       assert_true(first.path.contains("/namespaces/west/configmaps/settings"))
       connection.send_response(200, "OK")
       connection.write(
-        "{\"metadata\":{\"name\":\"settings\",\"namespace\":\"west\",\"resourceVersion\":\"3\",\"annotations\":{\"cxh04.github.io/kubemoon-owner-uid\":\"uid-1\"}}}",
+        "{\"metadata\":{\"name\":\"settings\",\"namespace\":\"west\",\"uid\":\"target-uid\",\"resourceVersion\":\"3\",\"annotations\":{\"cxh04.github.io/kubemoon-owner-uid\":\"uid-1\"}}}",
       )
       connection.end_response()
       let delete = connection.read_request()

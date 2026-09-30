@@ -179,18 +179,27 @@ async fn ConfigMirrorReconciler::remove_targets(
       Err(message) => return Err(message)
     }
     match current {
-      Some(target) if @configmirror.owned_by(target, mirror) =>
-        match
-          self.write(
-            self.client.delete_request(
-              configmaps(),
-              Namespace(namespace_name),
-              target.name(),
-            ),
-          ) {
-          Ok(_) => pending = true
-          Err(message) => return Err(message)
+      Some(target) if @configmirror.owned_by(target, mirror) => {
+        if target.uid().is_empty() {
+          return Err("Managed target ConfigMap has no UID")
         }
+        let request = self.client.delete_with_uid_request(
+          configmaps(),
+          Namespace(namespace_name),
+          target.name(),
+          target.uid(),
+        )
+        let response = self.transport.send(request)
+        if response.status() == 404 {
+          ()
+        } else if response.is_success() {
+          pending = true
+        } else {
+          return Err(
+            "DELETE \{namespace_name}/\{target.name()} failed with HTTP \{response.status()}",
+          )
+        }
+      }
       _ => ()
     }
   }

@@ -5,3 +5,7 @@ import {
   "moonbitlang/core/debug",
   "moonbitlang/core/encoding/percent",
 }
+
+import {
+  "moonbitlang/core/json",
+} for "test"

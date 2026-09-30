@@ -228,3 +228,22 @@ test "list continuation encodes the token without changing the resource path" {
     "https://cluster.example/api/v1/namespaces/demo/configmaps?continue=next%2F%2B",
   )
 }
+
+///|
+test "UID-preconditioned delete prevents a same-name race" {
+  let client = @client.DynamicClient::DynamicClient(
+    ClientConfig(server="https://cluster.example"),
+  )
+  let request = client.delete_with_uid_request(
+    configmaps(),
+    Namespace("west"),
+    "settings",
+    "target-uid",
+  )
+  assert_eq(request.verb().http_name(), "DELETE")
+  assert_eq(request.header("content-type"), Some("application/json"))
+  assert_eq(
+    @json.parse(request.body().unwrap()),
+    @json.parse("{\"preconditions\":{\"uid\":\"target-uid\"}}"),
+  )
+}

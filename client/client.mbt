@@ -220,3 +220,25 @@ pub fn DynamicClient::delete_request(
   let path = @resource.object_path(resource, scope, name)
   self.prepare(Request(Delete, self.endpoint(path)))
 }
+
+///|
+/// Delete only the object whose UID was observed by the caller. This prevents
+/// a read-delete race from removing a new same-name object owned by someone
+/// else during finalizer cleanup.
+pub fn DynamicClient::delete_with_uid_request(
+  self : DynamicClient,
+  resource : @resource.GroupVersionResource,
+  scope : @resource.Scope,
+  name : String,
+  uid : String,
+) -> @transport.Request {
+  let path = @resource.object_path(resource, scope, name)
+  let body = Json::object({
+    "preconditions": Json::object({ "uid": Json::string(uid) }),
+  }).stringify()
+  self.prepare(
+    @transport.Request(Delete, self.endpoint(path), body~).with_header(
+      "Content-Type", "application/json",
+    ),
+  )
+}
