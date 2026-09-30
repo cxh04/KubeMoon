@@ -25,6 +25,14 @@ jobs:
         run: moon check --target native --deny-warn --warn-list +73
       - name: Test native target
         run: moon test --target native
+      - name: Check release file list
+        shell: bash
+        run: |
+          files="$(moon package --list)"
+          if printf '%s\n' "$files" | grep -E '(^|[/\\])superpowers([/\\]|$)|项目申报书|~\$'; then
+            echo 'Release contains private or internal files' >&2
+            exit 1
+          fi
       - name: Run local watch demonstration
         run: moon run examples/watch_once --target native
 

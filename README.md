@@ -2,7 +2,7 @@
 
 这是我基于 MoonBit 开发的 Kubernetes 动态客户端与 Controller Runtime。没有只给某个 YAML 操作包一层，而是补齐 Operator 真正依赖的那条长链：资源发现、动态对象、LIST/WATCH、缓存、去重队列、失败恢复与调谐。
 
-> v0.1.0 已发布为 `cxh04/kubemoon`。动态客户端、原生 HTTP/TLS、分页 LIST/WATCH 恢复、Controller 队列和 ConfigMirror 调谐通过 native 测试；[GitHub Actions 的 kind 验收](https://github.com/cxh04/KubeMoon/actions/runs/36689826457)也走通了双目标同步、更新、自愈、重启与 finalizer 清理。我在独立新项目中安装 `cxh04/kubemoon@0.1.0` 并通过 native 检查。
+> 当前源码版本为 `0.1.1`；已发布的 `0.1.0` 完成了 native 测试和 [kind 生命周期验收](https://github.com/cxh04/KubeMoon/actions/runs/36689826457)。动态客户端、原生 HTTP/TLS、分页 LIST/WATCH 恢复、Controller 队列和 ConfigMirror 调谐均可验证。我还在独立新项目中安装 `cxh04/kubemoon@0.1.0` 并通过 native 检查。
 
 ![KubeMoon 中文架构图](docs/kubemoon-architecture.zh-CN.svg)
 
@@ -58,7 +58,7 @@ moon run examples/watch_once --target native
 
 `cmd/configmirror` 使用 Pod 内 ServiceAccount Token 和 CA，监听 ConfigMirror 与 ConfigMap，按源内容创建或更新多个 namespace 的目标。它只会修改带有当前 CR UID 注解的目标；同名但不受管的 ConfigMap 会使 `Ready=False`，不会被覆盖。删除 CR 时，finalizer 等受管目标实际消失后才移除。
 
-在 Linux、Docker、kind、kubectl 均可用的机器上运行 `bash tests/kind-e2e.sh`。脚本创建独立的 kind 集群，构建 native 镜像，安装 [CRD](deploy/configmirror-crd.yaml) 与 [Controller/RBAC](deploy/configmirror-controller.yaml)，验证双目标同步、源更新、目标删除自愈、Controller 重启及 finalizer 清理，最后删除它创建的集群。本机 Windows 环境没有 Docker/kind；这项结果由 [GitHub Actions 的 kind 作业](https://github.com/cxh04/KubeMoon/actions/runs/36689826457)验证。
+在 Linux、Docker、kind、kubectl 均可用的机器上运行 `bash tests/kind-e2e.sh`。脚本创建独立的 kind 集群，构建 native 镜像，安装 [CRD](deploy/configmirror-crd.yaml) 与 [Controller/RBAC](deploy/configmirror-controller.yaml)，验证双目标同步、源更新、目标删除自愈、Controller 重启及 finalizer 清理，最后删除它创建的集群。[GitHub Actions 的 kind 作业](https://github.com/cxh04/KubeMoon/actions/runs/36689826457)已验证这一流程。
 
 ## 故障恢复现场
 
@@ -78,6 +78,6 @@ v0.1 的真实集群生命周期与新项目安装已经验证。当前实现只
 
 ## 开发记录与许可证
 
-提交遵循 Conventional Commits，正文记录实际验证命令。失败实验与设计变化保留在提交说明、Issue 或开发日记中，有自身主导ai辅助开发。AI 使用边界见 [AI_ASSISTED.md](AI_ASSISTED.md)。
+提交遵循 Conventional Commits，正文记录实际验证命令。项目由我确定技术方向和质量边界，AI 的辅助范围见 [AI_ASSISTED.md](AI_ASSISTED.md)。
 
 Apache-2.0 licensed. Copyright 2026 cxh04.
