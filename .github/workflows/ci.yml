@@ -25,3 +25,5 @@ jobs:
         run: moon check --target native --deny-warn --warn-list +73
       - name: Test native target
         run: moon test --target native
+      - name: Run local watch demonstration
+        run: moon run examples/watch_once --target native
