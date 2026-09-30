@@ -1,0 +1,71 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: configmirrors.kubemoon.cxh04.github.io
+spec:
+  group: kubemoon.cxh04.github.io
+  scope: Namespaced
+  names:
+    plural: configmirrors
+    singular: configmirror
+    kind: ConfigMirror
+    shortNames: [cmirror]
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: [spec]
+          properties:
+            spec:
+              type: object
+              required: [source, targets]
+              properties:
+                source:
+                  type: object
+                  required: [namespace, name]
+                  properties:
+                    namespace:
+                      type: string
+                      minLength: 1
+                    name:
+                      type: string
+                      minLength: 1
+                targets:
+                  type: array
+                  minItems: 1
+                  uniqueItems: true
+                  items:
+                    type: string
+                    minLength: 1
+            status:
+              type: object
+              properties:
+                observedGeneration:
+                  type: integer
+                  format: int64
+                contentHash:
+                  type: string
+                syncedTargets:
+                  type: array
+                  items:
+                    type: string
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    required: [type, status, reason]
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      reason:
+                        type: string
+                      observedGeneration:
+                        type: integer
+                        format: int64
