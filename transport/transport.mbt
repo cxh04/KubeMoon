@@ -8,6 +8,12 @@ pub(all) enum Method {
 } derive(Debug, Eq)
 
 ///|
+pub extend Method with @debug.Debug::{to_repr}
+
+///|
+pub extend Method with Eq::{not_equal, equal}
+
+///|
 pub fn Method::http_name(self : Method) -> String {
   match self {
     Get => "GET"

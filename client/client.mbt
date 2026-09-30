@@ -5,6 +5,12 @@ pub(all) enum PatchType {
 } derive(Debug, Eq)
 
 ///|
+pub extend PatchType with @debug.Debug::{to_repr}
+
+///|
+pub extend PatchType with Eq::{not_equal, equal}
+
+///|
 pub struct DynamicClient {
   config : @config.ClientConfig
 }

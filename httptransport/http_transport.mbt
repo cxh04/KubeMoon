@@ -5,6 +5,12 @@ pub(all) suberror HttpTransportError {
 } derive(Debug, Eq)
 
 ///|
+pub extend HttpTransportError with @debug.Debug::{to_repr}
+
+///|
+pub extend HttpTransportError with Eq::{not_equal, equal}
+
+///|
 /// A native HTTP connection bound to one Kubernetes API server.
 ///
 /// Calls to `send` are serialized by the caller. Connection pooling and

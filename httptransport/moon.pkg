@@ -4,8 +4,8 @@ import {
   "cxh04/kubemoon/config",
   "cxh04/kubemoon/transport",
   "moonbitlang/async/http",
-  "moonbitlang/async/io",
   "moonbitlang/async/tls",
+  "moonbitlang/core/debug",
 }
 
 import {

@@ -6,6 +6,12 @@ pub(all) struct GroupVersionResource {
 } derive(Debug, Eq)
 
 ///|
+pub extend GroupVersionResource with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend GroupVersionResource with Eq::{not_equal, equal}
+
+///|
 pub fn GroupVersionResource::GroupVersionResource(
   group~ : String,
   version~ : String,
@@ -19,6 +25,12 @@ pub(all) enum Scope {
   Cluster
   Namespace(String)
 } derive(Debug, Eq)
+
+///|
+pub extend Scope with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend Scope with Eq::{not_equal, equal}
 
 ///|
 fn GroupVersionResource::api_prefix(self : GroupVersionResource) -> String {

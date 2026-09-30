@@ -8,6 +8,12 @@ pub(all) enum EventKind {
 } derive(Debug, Eq)
 
 ///|
+pub extend EventKind with @debug.Debug::{to_repr}
+
+///|
+pub extend EventKind with Eq::{not_equal, equal}
+
+///|
 pub fn EventKind::name(self : EventKind) -> String {
   match self {
     Added => "ADDED"

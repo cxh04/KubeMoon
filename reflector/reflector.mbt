@@ -5,6 +5,12 @@ pub(all) enum Action {
 } derive(Debug, Eq)
 
 ///|
+pub extend Action with @debug.Debug::{to_repr}
+
+///|
+pub extend Action with Eq::{not_equal, equal}
+
+///|
 pub fn Action::name(self : Action) -> String {
   match self {
     Continue => "CONTINUE"
