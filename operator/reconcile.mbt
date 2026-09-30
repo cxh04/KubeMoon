@@ -216,7 +216,7 @@ pub async fn ConfigMirrorReconciler::reconcile(
   }
   let spec = match @configmirror.decode_spec(mirror) {
     Ok(spec) => spec
-    Err(message) => return Err(message)
+    Err(message) => return self.report_failure(mirror, "InvalidSpec", message)
   }
   if @controller.is_deleting(mirror) {
     match self.remove_targets(mirror, spec) {
@@ -273,18 +273,21 @@ pub async fn ConfigMirrorReconciler::reconcile(
         return self.report_failure(
           mirror, "SourceMissing", "Source ConfigMap not found",
         )
-      Err(message) => return Err(message)
+      Err(message) =>
+        return self.report_failure(mirror, "SourceReadFailed", message)
     }
     for target_namespace in spec.targets() {
       let current = match
         self.fetch(configmaps(), Namespace(target_namespace), source.name()) {
         Ok(current) => current
-        Err(message) => return Err(message)
+        Err(message) =>
+          return self.report_failure(mirror, "TargetReadFailed", message)
       }
       let action = match
         @configmirror.plan_target(mirror, source, target_namespace, current) {
         Ok(action) => action
-        Err(message) => return Err(message)
+        Err(message) =>
+          return self.report_failure(mirror, "InvalidTarget", message)
       }
       let request = match action {
         Create(body) =>
@@ -315,13 +318,15 @@ pub async fn ConfigMirrorReconciler::reconcile(
       if request is Some(request) {
         match self.write(request) {
           Ok(_) => ()
-          Err(message) => return Err(message)
+          Err(message) =>
+            return self.report_failure(mirror, "ApplyFailed", message)
         }
       }
     }
     let hash = match @configmirror.content_hash(source) {
       Ok(hash) => hash
-      Err(message) => return Err(message)
+      Err(message) =>
+        return self.report_failure(mirror, "InvalidSource", message)
     }
     self.set_status(mirror, ready_status(mirror, hash, spec.targets()))
   }
