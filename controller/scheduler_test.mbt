@@ -47,3 +47,43 @@ async test "controller retries a failed key after virtual time advances" {
   assert_true(@controller.process_next(reflector, reconcile))
   assert_eq(attempts.length(), 2)
 }
+
+///|
+async test "busy keys do not starve a delayed retry" {
+  @async.with_task_group() <| group => {
+    let reflector = @reflector.Reflector::Reflector()
+    let bad = @object.DynamicObject::from_json(
+      @json.parse("{\"metadata\":{\"name\":\"bad\",\"resourceVersion\":\"1\"}}"),
+    )
+    let busy = @object.DynamicObject::from_json(
+      @json.parse(
+        "{\"metadata\":{\"name\":\"busy\",\"resourceVersion\":\"1\"}}",
+      ),
+    )
+    reflector.replace([bad, busy], "1")
+    let attempts : Array[Int] = []
+    let task = group.spawn(() => {
+      @controller.run(reflector, (key, _) => {
+        if key == "bad" {
+          attempts.push(1)
+          if attempts.length() == 1 {
+            Err("retry")
+          } else {
+            Ok(())
+          }
+        } else {
+          reflector.enqueue("busy")
+          @async.sleep(1)
+          Ok(())
+        }
+      })
+    })
+    for attempt = 0
+        attempt < 200 && attempts.length() < 2
+        attempt = attempt + 1 {
+      @async.sleep(10)
+    }
+    task.cancel()
+    assert_eq(attempts.length(), 2)
+  }
+}

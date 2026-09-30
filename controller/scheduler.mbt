@@ -30,10 +30,16 @@ pub async fn run(
   reflector : @reflector.Reflector,
   reconcile : async (String, @object.DynamicObject?) -> Result[Unit, String],
 ) -> Unit {
+  let mut last_tick = @async.now()
   for ;; {
+    let tick = @async.now()
+    let elapsed = tick - last_tick
+    if elapsed > 0L {
+      reflector.advance(elapsed.min(30000L).to_int())
+      last_tick = tick
+    }
     if !process_next(reflector, reconcile) {
       @async.sleep(50)
-      reflector.advance(50)
     }
   }
 }
