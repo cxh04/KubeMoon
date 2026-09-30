@@ -2,7 +2,7 @@
 
 这是我基于 MoonBit 开发的 Kubernetes 动态客户端与 Controller Runtime。没有只给某个 YAML 操作包一层，而是补齐 Operator 真正依赖的那条长链：资源发现、动态对象、LIST/WATCH、缓存、去重队列、失败恢复与调谐。
 
-> 当前处于 v0.1 验收期：动态客户端、原生 HTTP/TLS、分页 LIST/WATCH 恢复、Controller 队列和 ConfigMirror 调谐已通过本地 native 测试。CRD、RBAC、容器镜像和 kind 生命周期脚本已入库；kind 集群与 Mooncakes 消费者安装仍须以 CI 和发布结果验收，不能用单元测试代替。
+> v0.1.0 已发布为 `cxh04/kubemoon`。动态客户端、原生 HTTP/TLS、分页 LIST/WATCH 恢复、Controller 队列和 ConfigMirror 调谐通过 native 测试；[GitHub Actions 的 kind 验收](https://github.com/cxh04/KubeMoon/actions/runs/36689826457)也走通了双目标同步、更新、自愈、重启与 finalizer 清理。我在独立新项目中安装 `cxh04/kubemoon@0.1.0` 并通过 native 检查。
 
 ![KubeMoon 中文架构图](docs/kubemoon-architecture.zh-CN.svg)
 
@@ -58,7 +58,7 @@ moon run examples/watch_once --target native
 
 `cmd/configmirror` 使用 Pod 内 ServiceAccount Token 和 CA，监听 ConfigMirror 与 ConfigMap，按源内容创建或更新多个 namespace 的目标。它只会修改带有当前 CR UID 注解的目标；同名但不受管的 ConfigMap 会使 `Ready=False`，不会被覆盖。删除 CR 时，finalizer 等受管目标实际消失后才移除。
 
-在 Linux、Docker、kind、kubectl 均可用的机器上运行 `bash tests/kind-e2e.sh`。脚本创建独立的 kind 集群，构建 native 镜像，安装 [CRD](deploy/configmirror-crd.yaml) 与 [Controller/RBAC](deploy/configmirror-controller.yaml)，验证双目标同步、源更新、目标删除自愈、Controller 重启及 finalizer 清理，最后删除它创建的集群。本机 Windows 环境没有 Docker/kind，因此这项结果以 GitHub Actions 的 kind 作业为准；作业未通过前不宣称端到端验收完成。
+在 Linux、Docker、kind、kubectl 均可用的机器上运行 `bash tests/kind-e2e.sh`。脚本创建独立的 kind 集群，构建 native 镜像，安装 [CRD](deploy/configmirror-crd.yaml) 与 [Controller/RBAC](deploy/configmirror-controller.yaml)，验证双目标同步、源更新、目标删除自愈、Controller 重启及 finalizer 清理，最后删除它创建的集群。本机 Windows 环境没有 Docker/kind；这项结果由 [GitHub Actions 的 kind 作业](https://github.com/cxh04/KubeMoon/actions/runs/36689826457)验证。
 
 ## 故障恢复现场
 
@@ -74,7 +74,7 @@ v0.1 不承诺 kubeconfig exec/OIDC、云厂商认证、OpenAPI 强类型生成�
 
 ## 从 v0.1 到完整 Operator 生态
 
-本次验收优先确认真实集群生命周期与新项目安装。当前实现只针对单实例 Controller：它以集群级 ConfigMap WATCH 识别源和目标变更，后续再缩小监听范围并增加共享 informer、多 Controller manager、leader election、代码生成与指标端点。
+v0.1 的真实集群生命周期与新项目安装已经验证。当前实现只针对单实例 Controller：它以集群级 ConfigMap WATCH 识别源和目标变更，后续再缩小监听范围并增加共享 informer、多 Controller manager、leader election、代码生成与指标端点。
 
 ## 开发记录与许可证
 
