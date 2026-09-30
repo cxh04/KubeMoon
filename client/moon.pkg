@@ -3,4 +3,5 @@ import {
   "cxh04/kubemoon/resource",
   "cxh04/kubemoon/transport",
   "moonbitlang/core/debug",
+  "moonbitlang/core/encoding/percent",
 }

@@ -94,6 +94,24 @@ pub fn DynamicClient::list_request(
 }
 
 ///|
+/// Build a Kubernetes watch request for a collection. The resource version is
+/// opaque: encode it as a query value without interpreting or sorting it.
+pub fn DynamicClient::watch_request(
+  self : DynamicClient,
+  resource : @resource.GroupVersionResource,
+  scope : @resource.Scope,
+  resource_version? : String,
+) -> @transport.Request {
+  let path = @resource.collection_path(resource, scope)
+  let query = match resource_version {
+    Some(version) =>
+      "?watch=1&allowWatchBookmarks=true&resourceVersion=\{@percent.encode(version)}"
+    None => "?watch=1&allowWatchBookmarks=true"
+  }
+  self.prepare(Request(Get, self.endpoint("\{path}\{query}")))
+}
+
+///|
 pub fn DynamicClient::get_request(
   self : DynamicClient,
   resource : @resource.GroupVersionResource,

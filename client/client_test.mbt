@@ -149,3 +149,40 @@ test "build the named API groups discovery request" {
   inspect(request.header("accept").unwrap_or(""), content="application/json")
   inspect(request.header("authorization") is None, content="true")
 }
+
+///|
+test "build watch requests with an opaque encoded resource version" {
+  let client = @client.DynamicClient::DynamicClient(
+    ClientConfig(server="https://cluster.example", bearer_token="secret"),
+  )
+  let request = client.watch_request(
+    configmaps(),
+    Namespace("team-a"),
+    resource_version="42/+中文",
+  )
+  inspect(request.verb().http_name(), content="GET")
+  inspect(
+    request.path(),
+    content="https://cluster.example/api/v1/namespaces/team-a/configmaps?watch=1&allowWatchBookmarks=true&resourceVersion=42%2F%2B%E4%B8%AD%E6%96%87",
+  )
+  inspect(
+    request.header("authorization").unwrap_or(""),
+    content="Bearer secret",
+  )
+  inspect(request.body() is None, content="true")
+}
+
+///|
+test "watch requests can start at the server's current version" {
+  let client = @client.DynamicClient::DynamicClient(
+    ClientConfig(server="https://cluster.example"),
+  )
+  let request = client.watch_request(
+    GroupVersionResource(group="apps", version="v1", resource="deployments"),
+    Cluster,
+  )
+  inspect(
+    request.path(),
+    content="https://cluster.example/apis/apps/v1/deployments?watch=1&allowWatchBookmarks=true",
+  )
+}
