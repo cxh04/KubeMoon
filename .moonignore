@@ -2,7 +2,6 @@ _build/
 target/
 .mooncakes/
 .worktrees/
-.DS_Store
 *.log
 /*项目申报书*
 /~$*
