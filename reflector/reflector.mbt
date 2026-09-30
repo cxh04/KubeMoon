@@ -114,6 +114,11 @@ pub fn Reflector::queue_length(self : Reflector) -> Int {
 }
 
 ///|
+pub fn Reflector::get(self : Reflector, key : String) -> @object.DynamicObject? {
+  self.store.get(key)
+}
+
+///|
 pub fn Reflector::next_key(self : Reflector) -> String? {
   self.queue.next()
 }

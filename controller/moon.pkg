@@ -1,0 +1,11 @@
+import {
+  "cxh04/kubemoon/object",
+  "cxh04/kubemoon/reflector",
+  "moonbitlang/async",
+}
+
+supported_targets = "native"
+
+import {
+  "moonbitlang/core/json",
+} for "test"
