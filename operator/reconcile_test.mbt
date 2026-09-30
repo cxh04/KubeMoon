@@ -158,3 +158,38 @@ async test "deletion waits for managed target to vanish before removing finalize
     assert_true(reconciler.reconcile("ops/mirror", Some(deleting)) is Ok(_))
   }
 }
+
+///|
+async test "missing source records a non-ready status and retries" {
+  @async.with_task_group() <| group => {
+    let server = @http.Server(@socket.Addr::parse("127.0.0.1:0"))
+    defer server.close()
+    group.spawn_bg() <| () => {
+      let (connection, _) = server.accept()
+      defer connection.close()
+      let get = connection.read_request()
+      assert_true(get.path.contains("/namespaces/source/configmaps/settings"))
+      connection.send_response(404, "Not Found")
+      connection.write("{}")
+      connection.end_response()
+      let status = connection.read_request()
+      assert_true(status.path.contains("/configmirrors/mirror/status"))
+      connection.send_response(200, "OK")
+      connection.write("{}")
+      connection.end_response()
+    }
+    let config = @config.ClientConfig(
+      server="http://127.0.0.1:\{server.addr.port()}",
+    )
+    let transport = @httptransport.HttpTransport::connect(config)
+    defer transport.close()
+    let client = @client.DynamicClient::DynamicClient(config)
+    let reconciler = @operator.ConfigMirrorReconciler::ConfigMirrorReconciler(
+      transport, client,
+    )
+    assert_true(
+      reconciler.reconcile("ops/mirror", Some(mirror_with_finalizer()))
+      is Err(_),
+    )
+  }
+}

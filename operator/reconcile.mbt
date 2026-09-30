@@ -107,6 +107,28 @@ fn ready_status(
 }
 
 ///|
+fn failed_status(
+  mirror : @object.DynamicObject,
+  reason : String,
+  message : String,
+) -> Json {
+  Json::object({
+    "observedGeneration": generation_of(mirror),
+    "contentHash": Json::string(""),
+    "syncedTargets": Json::array([]),
+    "conditions": Json::array([
+      Json::object({
+        "type": Json::string("Ready"),
+        "status": Json::string("False"),
+        "reason": Json::string(reason),
+        "message": Json::string(message),
+        "observedGeneration": generation_of(mirror),
+      }),
+    ]),
+  })
+}
+
+///|
 async fn ConfigMirrorReconciler::set_status(
   self : ConfigMirrorReconciler,
   mirror : @object.DynamicObject,
@@ -127,6 +149,20 @@ async fn ConfigMirrorReconciler::set_status(
       body,
     ),
   )
+}
+
+///|
+async fn ConfigMirrorReconciler::report_failure(
+  self : ConfigMirrorReconciler,
+  mirror : @object.DynamicObject,
+  reason : String,
+  message : String,
+) -> Result[Unit, String] {
+  match self.set_status(mirror, failed_status(mirror, reason, message)) {
+    Ok(_) => Err(message)
+    Err(status_error) =>
+      Err("\{message}; status update failed: \{status_error}")
+  }
 }
 
 ///|
@@ -233,7 +269,10 @@ pub async fn ConfigMirrorReconciler::reconcile(
         spec.source_name(),
       ) {
       Ok(Some(source)) => source
-      Ok(None) => return Err("Source ConfigMap not found")
+      Ok(None) =>
+        return self.report_failure(
+          mirror, "SourceMissing", "Source ConfigMap not found",
+        )
       Err(message) => return Err(message)
     }
     for target_namespace in spec.targets() {
@@ -267,7 +306,9 @@ pub async fn ConfigMirrorReconciler::reconcile(
           )
         Unchanged => None
         Conflict =>
-          return Err(
+          return self.report_failure(
+            mirror,
+            "TargetConflict",
             "Unowned target ConfigMap \{target_namespace}/\{source.name()}",
           )
       }
