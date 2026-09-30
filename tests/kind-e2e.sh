@@ -51,7 +51,7 @@ status_ready() {
 }
 
 moon build cmd/configmirror --target native --release
-test -x _build/native/release/build/cmd/configmirror/configmirror
+test -x _build/native/release/build/cmd/configmirror/configmirror.exe
 docker build -f deploy/Dockerfile -t kubemoon-configmirror:e2e \
   _build/native/release/build/cmd/configmirror
 kind create cluster --name "$cluster" --wait 120s
